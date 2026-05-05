@@ -100,4 +100,41 @@ public class TeamService {
         
         accountTeamRepository.save(newAccountTeam);
     }
+
+    @Transactional
+    public void leaveTeam(String requesterUsername, Long teamId) {
+        AccountTeam accountTeam = accountTeamRepository.findByAccountUsernameAndTeamId(requesterUsername, teamId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "You are not a member of this team"));
+
+        if (accountTeam.getRole() == TeamRole.ADMIN) {
+            long adminCount = accountTeamRepository.countByTeamIdAndRole(teamId, TeamRole.ADMIN);
+            if (adminCount <= 1) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot leave team: you are the last admin.");
+            }
+        }
+
+        accountTeamRepository.delete(accountTeam);
+    }
+
+    @Transactional
+    public void removeAccountFromTeam(String requesterUsername, Long teamId, String accountId) {
+        AccountTeam requesterTeam = accountTeamRepository.findByAccountUsernameAndTeamId(requesterUsername, teamId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Team not found or access denied"));
+
+        if (requesterTeam.getRole() != TeamRole.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admins can remove members");
+        }
+
+        AccountTeam targetTeam = accountTeamRepository.findByAccountUsernameAndTeamId(accountId, teamId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target account is not a member of this team"));
+
+        if (targetTeam.getRole() == TeamRole.ADMIN) {
+            long adminCount = accountTeamRepository.countByTeamIdAndRole(teamId, TeamRole.ADMIN);
+            if (adminCount <= 1) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot remove the last admin from the team.");
+            }
+        }
+
+        accountTeamRepository.delete(targetTeam);
+    }
 }

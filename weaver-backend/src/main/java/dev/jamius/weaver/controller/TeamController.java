@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -58,5 +59,28 @@ public class TeamController {
         TeamResponse team = teamService.editTeam(username, id, request);
 
         return ResponseEntity.ok(new ApiResponse<>(true, "Team updated successfully", Map.of("team", team)));
+    }
+
+    @PostMapping("/{id}/leave")
+    public ResponseEntity<ApiResponse<?>> leaveTeam(
+            Authentication authentication,
+            @PathVariable Long id) {
+
+        String requesterUsername = authentication.getName();
+        teamService.leaveTeam(requesterUsername, id);
+
+        return ResponseEntity.ok(new ApiResponse<>(true, "Left team successfully", null));
+    }
+
+    @DeleteMapping("/{id}/members/{usernameToRemove}")
+    public ResponseEntity<ApiResponse<?>> removeAccountFromTeam(
+            Authentication authentication,
+            @PathVariable Long id,
+            @PathVariable String usernameToRemove) {
+
+        String requesterUsername = authentication.getName();
+        teamService.removeAccountFromTeam(requesterUsername, id, usernameToRemove);
+
+        return ResponseEntity.ok(new ApiResponse<>(true, "Member removed successfully", null));
     }
 }
