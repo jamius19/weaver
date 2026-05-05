@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,6 +22,7 @@ import java.io.Serial;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Board extends Auditable {
 
     @Serial
@@ -34,7 +36,7 @@ public class Board extends Auditable {
     private String title;
 
     @Column(length = 2048)
-    private String content;
+    private String description;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "team_id", nullable = false)
