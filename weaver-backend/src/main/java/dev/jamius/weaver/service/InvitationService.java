@@ -23,7 +23,7 @@ public class InvitationService {
                 .build();
     }
 
-    public String getInvitation() {
+    public String getInvitationCode() {
         StringBuilder code = new StringBuilder(6);
         for (int i = 0; i < 8; i++) {
             code.append(ALPHANUMERIC.charAt(RANDOM.nextInt(ALPHANUMERIC.length())));
@@ -37,16 +37,16 @@ public class InvitationService {
         return invitationCode;
     }
 
-    public boolean isInvitationValid(String invitationCode) {
+    public boolean isInvitationCodeValid(String invitationCode) {
         log.info("Validating invitation code: {}", invitationCode);
 
         boolean isValidCode = CACHE.getIfPresent(invitationCode) != null;
-        CACHE.invalidate(invitationCode);
+        invalidateInvitationCode(invitationCode);
 
         return isValidCode;
     }
 
-    public void invalidateInvitation(String invitationCode) {
+    private void invalidateInvitationCode(String invitationCode) {
         CACHE.invalidate(invitationCode);
     }
 }

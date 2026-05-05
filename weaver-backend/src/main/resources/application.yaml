@@ -12,6 +12,8 @@ spring:
     banner-mode: off
 
 weaver:
+  app:
+    signup-enabled: false
   jwt:
     secret: weaver+super+duper+secret+key+goes+here+please+change+it+before+you+deploy+it+in+production
     expiration: 86400000

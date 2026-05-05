@@ -4,6 +4,7 @@ import dev.jamius.weaver.dto.ApiResponse;
 import dev.jamius.weaver.dto.auth.Signup;
 import dev.jamius.weaver.entity.Account;
 import dev.jamius.weaver.repository.AccountRepository;
+import dev.jamius.weaver.service.AppSettingsService;
 import dev.jamius.weaver.service.InvitationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+
+import static org.springframework.util.StringUtils.hasText;
 
 @Slf4j
 @RestController
@@ -30,11 +32,13 @@ public class AuthController {
     
     private final InvitationService invitationService;
 
+    private final AppSettingsService appSettingsService;
+
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/invitation-token")
     public ResponseEntity<ApiResponse<?>> getInvitationToken() {
-        String invitationToken = invitationService.getInvitation();
+        String invitationToken = invitationService.getInvitationCode();
 
         return ResponseEntity.ok(new ApiResponse<>(
                 true,
@@ -45,8 +49,16 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<?>> signup(@Valid @RequestBody Signup signup) {
-        if (StringUtils.hasText(signup.invitationCode())) {
-            if (!invitationService.isInvitationValid(signup.invitationCode())) {
+        boolean hasInvitationCode = hasText(signup.invitationCode());
+
+        if (!appSettingsService.isSignupEnabled() && !hasInvitationCode) {
+            log.info("Signup is disabled and no invitation code provided");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(false, "Signup is disabled without invitation code", null));
+        }
+
+        if (hasInvitationCode) {
+            if (!invitationService.isInvitationCodeValid(signup.invitationCode())) {
                 log.info("Invalid invitation code: {} Username: {}", signup.invitationCode(), signup.username());
 
                 return ResponseEntity.badRequest()
